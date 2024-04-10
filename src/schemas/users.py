@@ -1,20 +1,32 @@
-from datetime import datetime
-from typing import Optional
+from enum import Enum
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, EmailStr
 
 
 class UserSchema(BaseModel):
     id: int
     username: str
-    email: str
-    is_active: bool
-    is_superuser: bool
-    is_male: bool
-    created_at: datetime
+    email: EmailStr
+    password: str
     class Config:
         orm_mode = True
 
-class RegisterUserSchema(UserSchema):
-    password: str
-    created_at: Optional[datetime] = None
+
+class Goals(Enum):
+    lose = "lose"
+    maintain = "maintain"
+    gain = "gain"
+
+
+class UserMetricsSchema(BaseModel):
+    height: float = Field(..., gt=0)
+    weight: float = Field(..., gt=0)
+    age: int = Field(..., gt=0)
+    goal: str = Field(..., enum=Goals)
+    weight_preference: float = Field(..., gt=0)
+    is_male: bool
+
+
+class RegisterUserSchema(BaseModel):
+    user_metrics: UserMetricsSchema
+    user: UserSchema
