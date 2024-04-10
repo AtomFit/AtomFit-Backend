@@ -13,9 +13,8 @@ class UserOrm(Base):
     username: Mapped[str] = mapped_column(nullable=False)
     email: Mapped[str] = mapped_column(nullable=False, unique=True)
     hashed_password: Mapped[str] = mapped_column(nullable=False)
-    is_active: Mapped[bool] = mapped_column(nullable=False)
-    is_superuser: Mapped[bool] = mapped_column(nullable=False)
-    is_male: Mapped[bool] = mapped_column(nullable=False)
+    is_active: Mapped[bool] = mapped_column(default=False)
+    is_superuser: Mapped[bool] = mapped_column(default=False)
     created_at: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"))
 
     user_metrics: Mapped["UserMetricsOrm"] = relationship(back_populates="user")
@@ -29,9 +28,10 @@ class UserOrm(Base):
 
 class UserMetricsOrm(Base):
     __tablename__ = "user_metrics"
+    is_male: Mapped[bool] = mapped_column(nullable=False)
+    age: Mapped[int] = mapped_column(nullable=False)
     height: Mapped[float] = mapped_column(nullable=False)
     weight: Mapped[float] = mapped_column(nullable=False)
-    age: Mapped[int] = mapped_column(nullable=False)
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
     goal: Mapped[str] = mapped_column(nullable=False)
     weight_preference: Mapped[float] = mapped_column(nullable=False)

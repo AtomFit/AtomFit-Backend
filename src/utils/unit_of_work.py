@@ -2,11 +2,12 @@ from abc import ABC, abstractmethod
 from typing import Type
 
 from database import async_session_maker
-from repositories.users import UsersRepository
+from repositories.users import UsersRepository, UserMetricsRepository
 
 
 class IUnitOfWork(ABC):
     users: Type[UsersRepository]
+    user_metrics: Type[UserMetricsRepository]
 
     @abstractmethod
     def __init__(self): ...
@@ -32,6 +33,7 @@ class UnitOfWork:
         self.session = self.session_factory()
 
         self.users = UsersRepository(self.session)
+        self.user_metrics = UserMetricsRepository(self.session)
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         if exc_val:
