@@ -1,6 +1,2 @@
-from typing import Annotated
-from fastapi import Depends
+from fastapi import Cookie
 
-from utils.unit_of_work import IUnitOfWork, UnitOfWork
-
-UowDep: Annotated[IUnitOfWork, Depends(UnitOfWork)]
