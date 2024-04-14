@@ -8,8 +8,6 @@ class UserSchema(BaseModel):
     username: str
     email: EmailStr
     password: str
-    class Config:
-        orm_mode = True
 
 
 class Goals(Enum):
@@ -22,11 +20,15 @@ class UserMetricsSchema(BaseModel):
     height: float = Field(..., gt=0)
     weight: float = Field(..., gt=0)
     age: int = Field(..., gt=0)
-    goal: str = Field(..., enum=Goals)
+    goal: Goals
     weight_preference: float = Field(..., gt=0)
     is_male: bool
 
 
-class RegisterUserSchema(BaseModel):
-    user_metrics: UserMetricsSchema
-    user: UserSchema
+class RegisterUserSchema(UserSchema, UserMetricsSchema):
+    pass
+
+
+class LoginUserSchema(BaseModel):
+    email: EmailStr
+    password: str

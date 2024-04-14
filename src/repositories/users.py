@@ -1,9 +1,8 @@
-from models.users import UserOrm, UserMetricsOrm
+from models.users import UserOrm
 from utils.repositories import SQLAlchemyRepository
 
 
 class UsersRepository(SQLAlchemyRepository):
     model = UserOrm
 
-class UserMetricsRepository(SQLAlchemyRepository):
-    model = UserMetricsOrm
+

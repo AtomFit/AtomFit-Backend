@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-from src.config import settings
+from config import settings
 
 
 engine = create_async_engine(
@@ -9,6 +9,7 @@ engine = create_async_engine(
     # echo=True
 )
 async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
+
 
 class Base(DeclarativeBase):
     __abstract__ = True
@@ -25,5 +26,3 @@ class Base(DeclarativeBase):
                 cols.append(f"{col}={getattr(self, col)}")
 
         return f"{self.__class__.__name__}({', '.join(cols)})"
-
-
