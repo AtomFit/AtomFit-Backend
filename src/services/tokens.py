@@ -1,80 +1,108 @@
 from datetime import timedelta, datetime, timezone
-
+from typing import Final
 import jwt
+from fastapi import HTTPException, status
+from jwt import InvalidTokenError
+
 
 from config import settings
+from exeptions.users import InactiveUserException
 from schemas.users import UserSchema
+from services.users import UserService
+from utils.unit_of_work import IUnitOfWork
 
 
-class TokenService:
-    TOKEN_TYPE_FIELD = "type"
-    ACCESS_TOKEN_TYPE = "access"
-    REFRESH_TOKEN_TYPE = "refresh"
+class TokenEncoderService:
+    ACCESS_TOKEN: Final[str] = "access"
+    REFRESH_TOKEN: Final[str] = "refresh"
+    TOKEN_TYPE_FIELD: Final[str] = "token_type"
+
+    jwt_payload: dict = {}
+    expire_timedelta: timedelta | None = None
+    private_key = settings.auth_jwt.private_key_path.read_text()
+    algorithm: str = settings.auth_jwt.algorithm
+    expire_minutes: int = settings.auth_jwt.access_token_expire_minutes
 
     def __init__(self, user: UserSchema):
         self.user = user
 
-    def create_jwt(
-            self,
-            token_type: str,
-            token_data: dict,
-            expire_minutes: int = settings.auth_jwt.access_token_expire_minutes,
-            expire_timedelta: timedelta | None = None,
-    ) -> str:
-        jwt_payload = {self.TOKEN_TYPE_FIELD: token_type}
-        jwt_payload.update(token_data)
-        return self.encode_jwt(
-            payload=jwt_payload,
-            expire_minutes=expire_minutes,
-            expire_timedelta=expire_timedelta,
-        )
-
     def create_access_token(self) -> str:
-        jwt_payload = {
-            # subject
+        self.jwt_payload = {
+            self.TOKEN_TYPE_FIELD: self.ACCESS_TOKEN,
             "sub": self.user.email,
             "username": self.user.username,
             "email": self.user.email,
-            # "logged_in_at"
+            # "logged_in_at": now,
         }
-        return self.create_jwt(
-            token_type=self.ACCESS_TOKEN_TYPE,
-            token_data=jwt_payload,
-            expire_minutes=settings.auth_jwt.access_token_expire_minutes,
-        )
+        return self.encode_jwt()
 
     def create_refresh_token(self) -> str:
-        jwt_payload = {
+        self.jwt_payload = {
+            self.TOKEN_TYPE_FIELD: self.REFRESH_TOKEN,
             "sub": self.user.email,
             # "username": user.username,
         }
-        return self.create_jwt(
-            token_type=self.REFRESH_TOKEN_TYPE,
-            token_data=jwt_payload,
-            expire_timedelta=timedelta(days=settings.auth_jwt.refresh_token_expire_days),
+        self.expire_timedelta = timedelta(
+            days=settings.auth_jwt.refresh_token_expire_days
         )
+        return self.encode_jwt()
 
-    def encode_jwt(
-            self,
-            payload: dict,
-            private_key: str = settings.auth_jwt.private_key_path.read_text(),
-            algorithm: str = settings.auth_jwt.algorithm,
-            expire_minutes: int = settings.auth_jwt.access_token_expire_minutes,
-            expire_timedelta: timedelta | None = None,
-    ) -> str:
-        to_encode = payload.copy()
+    def encode_jwt(self) -> str:
+        to_encode = self.jwt_payload.copy()
         now = datetime.now(timezone.utc)
-        if expire_timedelta:
-            expire = now + expire_timedelta
+        if self.expire_timedelta:
+            expire = now + self.expire_timedelta
         else:
-            expire = now + timedelta(minutes=expire_minutes)
+            expire = now + timedelta(minutes=self.expire_minutes)
         to_encode.update(
-            exp=expire,
-            iat=now,
+            exp=(expire.timestamp()),
+            iat=(now.timestamp()),
         )
         encoded = jwt.encode(
             to_encode,
-            private_key,
-            algorithm=algorithm,
+            self.private_key,
+            algorithm=self.algorithm,
         )
         return encoded
+
+
+class TokenDecoderService:
+    public_key: str = settings.auth_jwt.public_key_path.read_text()
+    algorithm: str = settings.auth_jwt.algorithm
+
+    user: UserSchema | None = None
+
+    def __init__(self, token: str, uow: IUnitOfWork):
+        self.token = token
+        self.uow = uow
+        self.user_service = UserService(uow)
+
+    def decode_jwt(self) -> dict:
+        decoded = jwt.decode(
+            self.token,
+            self.public_key,
+            algorithms=[self.algorithm],
+        )
+        return decoded
+
+    def get_current_token_payload(self) -> dict:
+        try:
+            payload = self.decode_jwt()
+        except InvalidTokenError as e:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"invalid token error: {e}",
+            )
+        return payload
+
+    async def get_current_active_user(self) -> UserSchema:
+        payload = self.get_current_token_payload()
+        email: str | None = payload.get("sub")
+        self.user = await self.user_service.get_user(data={"email": email})
+
+        if self.user is None:
+            raise InvalidTokenError
+
+        if self.user.is_active is False:
+            raise InactiveUserException
+        return self.user
