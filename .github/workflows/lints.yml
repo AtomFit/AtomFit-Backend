@@ -32,4 +32,4 @@ jobs:
 
     - name: Check types by pyright
       run: |
-        mypy ./src/main.py
+        poetry run mypy 

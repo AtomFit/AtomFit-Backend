@@ -21,6 +21,7 @@ mypy = "^1.9.0"
 
 [tool.mypy]
 python_version = "3.12"
+files = ["src/main.py"]
 pretty = true
 strict = false
 
