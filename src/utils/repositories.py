@@ -1,7 +1,11 @@
 from abc import ABC, abstractmethod
+from typing import Type
+
 from sqlalchemy import insert, select, update, delete
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from database import Base
 
 
 class AbstractRepository(ABC):
@@ -10,11 +14,16 @@ class AbstractRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_one(self, options: list = None, filter_by=None):
+    async def get_one(self, options: list | None = None, filter_by: dict | None = None):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_all(self, options: list = None, order_by=None, filter_by=None):
+    async def get_all(
+        self,
+        options: list | None = None,
+        order_by: str | None = None,
+        filter_by: dict | None = None,
+    ) -> list | None:
         raise NotImplementedError
 
     @abstractmethod
@@ -27,18 +36,23 @@ class AbstractRepository(ABC):
 
 
 class SQLAlchemyRepository(AbstractRepository):
-    model = None
+    model = Type[Base]  # type: ignore
 
     def __init__(self, session: AsyncSession):
         self.session = session
 
     async def add_one(self, data: dict) -> int:
-        stmt = insert(self.model).values(**data).returning(self.model.id)
+        stmt = insert(self.model).values(**data).returning(self.model.id)  # type: ignore
         result = await self.session.execute(stmt)
         return result.scalar_one()
 
-    async def get_all(self, options: list = None, order_by=None, filter_by=None) -> list | None:
-        stmt = select(self.model)
+    async def get_all(
+        self,
+        options: list | None = None,
+        order_by: str | None = None,
+        filter_by: dict | None = None,
+    ) -> list | None:
+        stmt = select(self.model)  # type: ignore
         if filter is not None:
             stmt = stmt.filter_by(**filter_by)
         if options is not None:
@@ -52,8 +66,8 @@ class SQLAlchemyRepository(AbstractRepository):
         except NoResultFound:
             return None
 
-    async def get_one(self, options: list = None, filter_by=None):
-        stmt = select(self.model).filter_by(**filter_by)
+    async def get_one(self, options: list | None = None, filter_by: dict | None = None):
+        stmt = select(self.model).filter_by(**filter_by)  # type: ignore
         if options is not None:
             for entity in options:
                 stmt = stmt.options(entity)
@@ -65,15 +79,15 @@ class SQLAlchemyRepository(AbstractRepository):
 
     async def update_one(self, data: dict, _id: int) -> int:
         stmt = (
-            update(self.model)
-            .where(self.model.id == _id)
-            .values(**data)
-            .returning(self.model.id)
+            update(self.model)  # type: ignore
+            .where(self.model.id == _id)  # type: ignore
+            .values(**data)  # type: ignore
+            .returning(self.model.id)  # type: ignore
         )
-        result = await self.session.execute(stmt)
+        result = await self.session.execute(stmt)  # type: ignore
         return result.scalar_one() if result else None
 
     async def delete_one(self, _id: int) -> int:
-        stmt = delete(self.model).where(self.model.id == _id).returning(self.model.id)
+        stmt = delete(self.model).where(self.model.id == _id).returning(self.model.id)  # type: ignore
         result = await self.session.execute(stmt)
         return result.scalar_one() if result else None

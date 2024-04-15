@@ -1,12 +1,12 @@
-from typing import Final
+from typing import Final, Any
 import bcrypt
 from fastapi import Response, Request
 
 from exeptions.users import EmailAlreadyExistsException, UserNotFoundException
 from schemas.users import (
-    UserSchema,
-    RegisterUserSchema,
+    RegisterUserExtendSchema,
     LoginUserSchema,
+    UserSchema,
 )
 from services.tokens import TokenEncoderService, TokenDecoderService
 from services.users import UserService
@@ -17,22 +17,22 @@ class AuthService:
     ACCESS_TOKEN: Final[str] = "access"
     REFRESH_TOKEN: Final[str] = "refresh"
 
-    def __init__(self, uow: IUnitOfWork):
+    def __init__(self, uow: IUnitOfWork) -> None:
         self.uow = uow
         self.user_service = UserService(uow=self.uow)
 
-    async def register(self, user_data: RegisterUserSchema) -> int:
+    async def register(self, user_data: RegisterUserExtendSchema) -> int | None:
         user_data_dict = self.get_user_data_dict(user_data)
         user = await self.get_user(user_data_dict["email"])
         if user:
             raise EmailAlreadyExistsException
 
         async with self.uow:
-            user_id = await self.uow.users.add_one(data=user_data_dict)
+            user_id = await self.uow.users.add_one(data=user_data_dict)  # type: ignore
             await self.uow.commit()
         return user_id
 
-    async def login(self, data: LoginUserSchema, response: Response) -> dict:
+    async def login(self, data: LoginUserSchema, response: Response) -> dict[str, str]:
         user = await self.get_user(data.email)
         if user is None:
             raise UserNotFoundException
@@ -56,17 +56,17 @@ class AuthService:
         )
         return {"result": "success"}
 
-    def logout(self, response: Response):
+    def logout(self, response: Response) -> None:
         response.delete_cookie(key=self.ACCESS_TOKEN)
         response.delete_cookie(key=self.REFRESH_TOKEN)
 
-    async def refresh(self, response: Response, request: Request):
-        refresh_token = request.cookies.get(self.REFRESH_TOKEN)
-        token_service = TokenDecoderService(refresh_token, uow=self.uow)
-        user = await token_service.get_current_active_user()
+    async def refresh(self, response: Response, request: Request) -> None:
+        refresh_token: str | None = request.cookies.get(self.REFRESH_TOKEN)
+        token_decode_service = TokenDecoderService(refresh_token, uow=self.uow)
+        user = await token_decode_service.get_current_active_user()
 
-        token_service = TokenEncoderService(user)
-        access_token = token_service.create_access_token()
+        token_encode_service = TokenEncoderService(user)
+        access_token = token_encode_service.create_access_token()
         response.set_cookie(
             key=self.ACCESS_TOKEN,
             value=access_token,
@@ -75,14 +75,15 @@ class AuthService:
             samesite="strict",
         )
 
-    async def get_user(self, email: str):
+    async def get_user(self, email: str) -> UserSchema | None:
         user_service = UserService(uow=self.uow)
         async with self.uow:
             user = await user_service.get_user(data={"email": email})
         if user:
             return user
+        return None
 
-    def get_user_data_dict(self, user_data: UserSchema) -> dict:
+    def get_user_data_dict(self, user_data: RegisterUserExtendSchema) -> dict[str, Any]:
         hashed_password = self.hash_password(user_data.password)
         return {
             "email": user_data.email,

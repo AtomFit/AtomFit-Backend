@@ -3,16 +3,16 @@ from fastapi import Cookie
 from schemas.users import UserSchema
 from services.tokens import TokenDecoderService
 from services.auth import AuthService
-from utils.unit_of_work import UnitOfWork
+from utils.unit_of_work import UnitOfWork, IUnitOfWork
 
 
 def get_auth_service() -> AuthService:
-    uow = UnitOfWork()
-    auth_service = AuthService(uow)
+    uow: IUnitOfWork = UnitOfWork()
+    auth_service: AuthService = AuthService(uow)
     return auth_service
 
 
 async def get_current_active_user(access: str = Cookie(None)) -> UserSchema:
-    uow = UnitOfWork()
-    token_service = TokenDecoderService(access, uow=uow)
+    uow: IUnitOfWork = UnitOfWork()
+    token_service: TokenDecoderService = TokenDecoderService(access, uow=uow)
     return await token_service.get_current_active_user()

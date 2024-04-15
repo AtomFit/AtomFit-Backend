@@ -17,7 +17,7 @@ class Base(DeclarativeBase):
     id: Mapped[int] = mapped_column(primary_key=True)
 
     repr_cols_count = 3
-    repr_cols = tuple()
+    repr_cols: tuple = tuple()
 
     def __repr__(self):
         cols = []

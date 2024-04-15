@@ -1,5 +1,5 @@
 from datetime import timedelta, datetime, timezone
-from typing import Final
+from typing import Final, Any
 import jwt
 from fastapi import HTTPException, status
 from jwt import InvalidTokenError
@@ -17,7 +17,7 @@ class TokenEncoderService:
     REFRESH_TOKEN: Final[str] = "refresh"
     TOKEN_TYPE_FIELD: Final[str] = "token_type"
 
-    jwt_payload: dict = {}
+    jwt_payload: dict[Any, Any] = {}
     expire_timedelta: timedelta | None = None
     private_key = settings.auth_jwt.private_key_path.read_text()
     algorithm: str = settings.auth_jwt.algorithm
@@ -72,20 +72,20 @@ class TokenDecoderService:
 
     user: UserSchema | None = None
 
-    def __init__(self, token: str, uow: IUnitOfWork):
+    def __init__(self, token: str | None, uow: IUnitOfWork):
         self.token = token
         self.uow = uow
         self.user_service = UserService(uow)
 
-    def decode_jwt(self) -> dict:
-        decoded = jwt.decode(
-            self.token,
+    def decode_jwt(self) -> dict[Any, Any]:
+        decoded: dict[Any, Any] = jwt.decode(
+            self.token,  # type: ignore
             self.public_key,
             algorithms=[self.algorithm],
         )
         return decoded
 
-    def get_current_token_payload(self) -> dict:
+    def get_current_token_payload(self) -> dict[str, str]:
         try:
             payload = self.decode_jwt()
         except InvalidTokenError as e:

@@ -3,11 +3,14 @@ from enum import Enum
 from pydantic import BaseModel, Field, EmailStr
 
 
-class UserSchema(BaseModel):
-    id: int
-    username: str
+class LoginUserSchema(BaseModel):
     email: EmailStr
     password: str
+
+
+class RegisterUserSchema(BaseModel):
+    username: str
+    email: EmailStr
 
 
 class Goals(Enum):
@@ -25,10 +28,13 @@ class UserMetricsSchema(BaseModel):
     is_male: bool
 
 
-class RegisterUserSchema(UserSchema, UserMetricsSchema):
-    pass
-
-
-class LoginUserSchema(BaseModel):
-    email: EmailStr
+class RegisterUserExtendSchema(RegisterUserSchema, UserMetricsSchema):
     password: str
+
+
+class UserSchema(RegisterUserSchema, UserMetricsSchema):
+    id: int
+    is_active: bool
+    is_superuser: bool
+    class Config:
+        orm_mode = True

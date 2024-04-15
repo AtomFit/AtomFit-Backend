@@ -2,5 +2,6 @@
 <project version="4">
   <component name="MypyConfigService">
     <option name="customMypyPath" value="$PROJECT_DIR$/src/main.py" />
+    <option name="mypyConfigFilePath" value="$PROJECT_DIR$/pyproject.toml" />
   </component>
 </project>
