@@ -19,7 +19,7 @@ class TokenEncoderService:
 
     jwt_payload: dict[Any, Any] = {}
     expire_timedelta: timedelta | None = None
-    private_key = settings.auth_jwt.private_key_path.read_text()
+    private_key = settings.auth_jwt.private_key
     algorithm: str = settings.auth_jwt.algorithm
     expire_minutes: int = settings.auth_jwt.access_token_expire_minutes
 
@@ -67,7 +67,7 @@ class TokenEncoderService:
 
 
 class TokenDecoderService:
-    public_key: str = settings.auth_jwt.public_key_path.read_text()
+    public_key: str = settings.auth_jwt.public_key
     algorithm: str = settings.auth_jwt.algorithm
 
     user: UserSchema | None = None
