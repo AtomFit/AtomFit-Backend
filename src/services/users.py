@@ -1,7 +1,11 @@
 from typing import Any
 
+from exeptions.users import NoSuperUserException
 from schemas.users import UserSchema, UserUpdateSchema, UpdateUser
 from utils.unit_of_work import IUnitOfWork
+
+
+
 
 
 class UserService:
@@ -21,9 +25,11 @@ class UserService:
             await self.uow.commit()
         return user_id
 
-    async def delete_user(self, _id: int) -> int:
+    async def delete_user(self, user_id: int, user: UserSchema) -> int:
+        if not user.is_superuser and user_id != user.id:
+            raise NoSuperUserException
         async with self.uow:
-            user_id = await self.uow.users.delete_one(_id)  # type: ignore
+            user_id = await self.uow.users.delete_one(user_id)  # type: ignore
             await self.uow.commit()
         return user_id
 
