@@ -13,7 +13,7 @@ load_dotenv()
 
 PRIVATE_KEY_PATH: Path = BASE_DIR / "rsa.private"
 PUBLIC_KEY_PATH: Path = BASE_DIR / "rsa.public"
-STAGE: Final[str] = os.getenv("STAGE")
+STAGE: Final[str | None] = os.getenv("STAGE")
 DB_HOST = os.getenv("DB_HOST")
 DB_PORT = os.getenv("DB_PORT")
 DB_USER = os.getenv("DB_USER")
@@ -21,7 +21,7 @@ DB_PASS = os.getenv("DB_PASS")
 DB_NAME = os.getenv("DB_NAME")
 
 
-def get_public_key(stage) -> str:
+def get_public_key(stage) -> str | None:
     if stage == "dev":
         return PUBLIC_KEY_PATH.read_text()
     elif stage == "prod":
@@ -30,7 +30,7 @@ def get_public_key(stage) -> str:
         raise Exception(f"Invalid stage. Stage must be either 'dev' or 'prod'.{stage}")
 
 
-def get_private_key(stage) -> str:
+def get_private_key(stage) -> str | None:
     if stage == "dev":
         return PRIVATE_KEY_PATH.read_text()
     elif stage == "prod":
