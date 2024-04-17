@@ -33,8 +33,8 @@ async def update_user_by_user_id(
     user_service=Depends(get_user_service),
     user=Depends(get_current_super_user),
 ) -> dict[str, int]:
-    user_id: int = await user_service.update_user_by_user_id(data=data, user_id=user_id)
-    return {"user_id": user_id}
+    updated_user_id: int = await user_service.update_user_by_user_id(data=data, user_id=user_id)
+    return {"user_id": updated_user_id}
 
 
 @router.delete("/user/{user_id}", tags=["users"], response_model=dict)
@@ -43,5 +43,5 @@ async def delete_user(
     current_active_user: UserSchema = Depends(get_current_active_user),
     user_service=Depends(get_user_service),
 ) -> dict[str, int]:
-    user_id: int = await user_service.delete_user(user_id=user_id, user=current_active_user)
-    return {"user_id": user_id}
+    deleted_user_id: int = await user_service.delete_user(user_id=user_id, user=current_active_user)
+    return {"user_id": deleted_user_id}
