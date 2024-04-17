@@ -1,6 +1,6 @@
 from typing import Any
 
-from schemas.users import UserSchema, UserUpdateSchema
+from schemas.users import UserSchema, UserUpdateSchema, UpdateUser
 from utils.unit_of_work import IUnitOfWork
 
 
@@ -21,8 +21,15 @@ class UserService:
             await self.uow.commit()
         return user_id
 
-    async def delete_user(self, _id: str) -> int:
+    async def delete_user(self, _id: int) -> int:
         async with self.uow:
             user_id = await self.uow.users.delete_one(_id)  # type: ignore
+            await self.uow.commit()
+        return user_id
+
+    async def update_user_by_user_id(self, data: UpdateUser, user_id: int) -> int:
+        data_dict = data.dict()
+        async with self.uow:
+            user_id = await self.uow.users.update_one(data=data_dict, _id=user_id)
             await self.uow.commit()
         return user_id

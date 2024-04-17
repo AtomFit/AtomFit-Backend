@@ -32,11 +32,13 @@ class RegisterUserExtendSchema(RegisterUserSchema, UserMetricsSchema):
     password: str
 
 
-class UserSchema(RegisterUserSchema, UserMetricsSchema):
-    id: int
+class UpdateUser(BaseModel):
     is_active: bool
     is_superuser: bool
 
+
+class UserSchema(RegisterUserSchema, UserMetricsSchema, UpdateUser):
+    id: int
 
 class UserUpdateSchema(UserMetricsSchema):
     username: str

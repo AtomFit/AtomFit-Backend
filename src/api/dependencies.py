@@ -1,5 +1,6 @@
 from fastapi import Cookie
 
+from exeptions.users import NoSuperUserException
 from schemas.users import UserSchema
 from services.tokens import TokenDecoderService
 from services.auth import AuthService
@@ -17,6 +18,15 @@ async def get_current_active_user(access: str = Cookie(None)) -> UserSchema:
     uow: IUnitOfWork = UnitOfWork()
     token_service: TokenDecoderService = TokenDecoderService(access, uow=uow)
     return await token_service.get_current_active_user()
+
+
+async def get_current_super_user(access: str = Cookie(None)) -> UserSchema:
+    uow: IUnitOfWork = UnitOfWork()
+    token_service: TokenDecoderService = TokenDecoderService(access, uow=uow)
+    res = await token_service.get_current_active_user()
+    if not res.is_superuser:
+        raise NoSuperUserException
+    return res
 
 
 def get_user_service() -> UserService:
