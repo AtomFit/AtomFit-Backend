@@ -36,5 +36,7 @@ class UserSchema(RegisterUserSchema, UserMetricsSchema):
     id: int
     is_active: bool
     is_superuser: bool
-    class Config:
-        orm_mode = True
+
+
+class UserUpdateSchema(UserMetricsSchema):
+    username: str
