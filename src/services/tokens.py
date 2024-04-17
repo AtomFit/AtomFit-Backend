@@ -60,14 +60,14 @@ class TokenEncoderService:
         )
         encoded = jwt.encode(
             to_encode,
-            self.private_key,
+            self.private_key,   # type: ignore
             algorithm=self.algorithm,
         )
         return encoded
 
 
 class TokenDecoderService:
-    public_key: str = settings.auth_jwt.public_key
+    public_key: str = settings.auth_jwt.public_key  # type: ignore
     algorithm: str = settings.auth_jwt.algorithm
 
     user: UserSchema | None = None

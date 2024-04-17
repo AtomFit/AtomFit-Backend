@@ -30,13 +30,14 @@ def get_public_key(stage) -> str | None:
         raise Exception(f"Invalid stage. Stage must be either 'dev' or 'prod'.{stage}")
 
 
+
 def get_private_key(stage) -> str | None:
     if stage == "dev":
         return PRIVATE_KEY_PATH.read_text()
     elif stage == "prod":
         return os.getenv("PRIVATE_KEY")
     else:
-        Exception(f"Invalid stage. Stage must be either 'dev' or 'prod'.{stage}")
+        raise Exception(f"Invalid stage. Stage must be either 'dev' or 'prod'.{stage}")
 
 
 class DbSettings(BaseModel):
@@ -49,15 +50,15 @@ class AuthJWT(BaseModel):
     algorithm: str = "RS256"
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 30
-    private_key: str = get_private_key(STAGE)
-    public_key: str = get_public_key(STAGE)
+    private_key: str | None = get_private_key(STAGE)
+    public_key: str | None = get_public_key(STAGE)
     # refresh_token_expire_minutes: int = 60 * 24 * 30
     # access_token_expire_minutes: int = 3
 
 
 class Settings(BaseSettings):
     db: DbSettings = DbSettings()
-    stage: Final[str] = STAGE
+    stage: Final[str | None] = STAGE
     auth_jwt: AuthJWT = AuthJWT()
 
     # db_echo: bool = True
