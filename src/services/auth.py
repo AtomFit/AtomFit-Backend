@@ -8,8 +8,8 @@ from schemas.users import (
     LoginUserSchema,
     UserSchema,
 )
+from services.nutrition.user_nutrients_goal import UserGoalNutrientsService
 from services.tokens import TokenEncoderService, TokenDecoderService
-from services.users import UserService
 from utils.unit_of_work import IUnitOfWork
 
 
@@ -19,21 +19,27 @@ class AuthService:
 
     def __init__(self, uow: IUnitOfWork) -> None:
         self.uow = uow
-        self.user_service = UserService(uow=self.uow)
 
-    async def register(self, user_data: RegisterUserExtendSchema) -> int | None:
+    async def register(self, user_data: RegisterUserExtendSchema) -> UserSchema | None:
         user_data_dict = self.get_user_data_dict(user_data)
-        user = await self.get_user(user_data_dict["email"])
-        if user:
-            raise EmailAlreadyExistsException
 
         async with self.uow:
+            user = await self.uow.users.get_one(    # type: ignore
+                filter_by={"email": user_data_dict["email"]}
+            )
+            if user:
+                raise EmailAlreadyExistsException
             user_id = await self.uow.users.add_one(data=user_data_dict)  # type: ignore
+            user = await self.uow.users.get_one(filter_by={"id": user_id})  # type: ignore
+            user_goal_nutrients_service = UserGoalNutrientsService(user=user)
+            user_new_goal = user_goal_nutrients_service.create_obj_of_goal_nutrients()
+            await self.uow.user_goal_nutrients.add_one(data=user_new_goal)  # type: ignore
             await self.uow.commit()
-        return user_id
+        return user
 
     async def login(self, data: LoginUserSchema, response: Response) -> dict[str, str]:
-        user = await self.get_user(data.email)
+        async with self.uow:
+            user = await self.uow.users.get_one(filter_by={"email": data.email})    # type: ignore
         if user is None:
             raise UserNotFoundException
 
@@ -74,14 +80,6 @@ class AuthService:
             secure=True,
             samesite="strict",
         )
-
-    async def get_user(self, email: str) -> UserSchema | None:
-        user_service = UserService(uow=self.uow)
-        async with self.uow:
-            user = await user_service.get_user(data={"email": email})
-        if user:
-            return user
-        return None
 
     def get_user_data_dict(self, user_data: RegisterUserExtendSchema) -> dict[str, Any]:
         hashed_password = self.hash_password(user_data.password)

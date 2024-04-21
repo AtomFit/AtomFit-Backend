@@ -2,11 +2,15 @@ from abc import ABC, abstractmethod
 from typing import Type
 
 from database import async_session_maker
+from repositories.nutriton.meal_nutrients import MealNutrientsRepository
+from repositories.nutriton.user_goal_nutrients import UserGoalNutrientsRepository
 from repositories.users import UsersRepository
 
 
 class IUnitOfWork(ABC):
     users = Type[UsersRepository]
+    meal_nutrients = Type[MealNutrientsRepository]
+    user_goal_nutrients = Type[UserGoalNutrientsRepository]
 
     @abstractmethod
     def __init__(self) -> None: ...
@@ -23,6 +27,12 @@ class IUnitOfWork(ABC):
     @abstractmethod
     async def rollback(self) -> None: ...
 
+    @abstractmethod
+    async def refresh(self, obj) -> None: ...
+
+    @abstractmethod
+    async def close(self) -> None: ...
+
 
 class UnitOfWork(IUnitOfWork):
     def __init__(self) -> None:
@@ -32,10 +42,13 @@ class UnitOfWork(IUnitOfWork):
         self.session = self.session_factory()
 
         self.users = UsersRepository(self.session)
+        self.meal_nutrients = MealNutrientsRepository(self.session)
+        self.user_goal_nutrients = UserGoalNutrientsRepository(self.session)
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
-        if exc_val:
+        if exc_type:
             await self.rollback()
+            print("EEEEEERRRORR")
         await self.session.close()
 
     async def commit(self) -> None:
@@ -43,3 +56,9 @@ class UnitOfWork(IUnitOfWork):
 
     async def rollback(self) -> None:
         await self.session.rollback()
+
+    async def refresh(self, obj):
+        await self.session.refresh(obj)
+
+    async def close(self):
+        await self.session.close()

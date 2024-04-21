@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Response, Request
 
 from api.dependencies import get_auth_service
-from schemas.users import LoginUserSchema, RegisterUserExtendSchema
+from schemas.users import LoginUserSchema, RegisterUserExtendSchema, UserSchema
 from services.auth import AuthService
 
 
@@ -13,9 +13,8 @@ router = APIRouter()
 async def register(
     user_data: RegisterUserExtendSchema,
     auth_service: Annotated[AuthService, Depends(get_auth_service)],
-) -> dict[str, int | None]:
-    user_id = await auth_service.register(user_data=user_data)
-    return {"user_id": user_id}
+) -> UserSchema | None:
+    return await auth_service.register(user_data=user_data)
 
 
 @router.post("/login", tags=["auth"], response_model=dict)
