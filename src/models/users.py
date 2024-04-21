@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Final
 
 from sqlalchemy import CheckConstraint, text
-from sqlalchemy.orm import Mapped, mapped_column, validates
+from sqlalchemy.orm import Mapped, mapped_column, validates, relationship
 import re
 
 from database import Base

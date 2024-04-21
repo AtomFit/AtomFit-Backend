@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Type
+from typing import Type, Any, Optional
 
 from sqlalchemy import insert, select, update, delete
 from sqlalchemy.exc import NoResultFound
@@ -51,18 +51,27 @@ class SQLAlchemyRepository(AbstractRepository):
         options: list | None = None,
         order_by: str | None = None,
         filter_by: dict | None = None,
-    ) -> list | None:
-        stmt = select(self.model)  # type: ignore
-        if filter is not None:
+        group_by: list | None = None,
+        select_by: list | None = None,
+        where: Any = None,
+    ):
+        if select_by is None:
+            select_by = [self.model]
+        stmt = select(*select_by)  # type: ignore
+        if filter_by is not None:
             stmt = stmt.filter_by(**filter_by)
+        if where is not None:
+            stmt = stmt.where(where)
         if options is not None:
             for entity in options:
                 stmt = stmt.options(entity)
+        if group_by is not None:
+            stmt = stmt.group_by(*group_by)
         if order_by is not None:
             stmt = stmt.order_by(order_by)
         try:
             result = await self.session.execute(stmt)
-            return result.scalar().all()
+            return result.fetchone()
         except NoResultFound:
             return None
 
@@ -77,10 +86,14 @@ class SQLAlchemyRepository(AbstractRepository):
         except NoResultFound:
             return None
 
-    async def update_one(self, data: dict, _id: int) -> int:
+    async def update_one(
+        self, data: dict, _id: int, where_arg: Optional[dict] = None
+    ) -> int:
+        if where_arg is None:
+            where_arg = (self.model.id == _id)  # type: ignore
         stmt = (
             update(self.model)  # type: ignore
-            .where(self.model.id == _id)  # type: ignore
+            .where(where_arg)  # type: ignore
             .values(**data)  # type: ignore
             .returning(self.model.id)  # type: ignore
         )

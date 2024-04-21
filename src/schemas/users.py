@@ -2,6 +2,8 @@ from enum import Enum
 
 from pydantic import BaseModel, Field, EmailStr
 
+from schemas.nutrition.meal_nutrients import CreateMealNutrientsSchema
+
 
 class LoginUserSchema(BaseModel):
     email: EmailStr
@@ -39,6 +41,9 @@ class UpdateUser(BaseModel):
 
 class UserSchema(RegisterUserSchema, UserMetricsSchema, UpdateUser):
     id: int
+
+class UserExtendSchema(UserSchema):
+    user_meal_goals: CreateMealNutrientsSchema
 
 class UserUpdateSchema(UserMetricsSchema):
     username: str
