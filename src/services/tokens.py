@@ -8,7 +8,6 @@ from jwt import InvalidTokenError
 from config import settings
 from exeptions.users import InactiveUserException
 from schemas.users import UserSchema
-from services.users import UserService
 from utils.unit_of_work import IUnitOfWork
 
 
@@ -75,7 +74,6 @@ class TokenDecoderService:
     def __init__(self, token: str | None, uow: IUnitOfWork):
         self.token = token
         self.uow = uow
-        self.user_service = UserService(uow)
 
     def decode_jwt(self) -> dict[Any, Any]:
         decoded: dict[Any, Any] = jwt.decode(
@@ -98,7 +96,8 @@ class TokenDecoderService:
     async def get_current_active_user(self) -> UserSchema:
         payload = self.get_current_token_payload()
         email: str | None = payload.get("sub")
-        self.user = await self.user_service.get_user(data={"email": email})
+        async with self.uow:
+            self.user = await self.uow.users.get_one(filter_by={"email": email})    # type: ignore
 
         if self.user is None:
             raise InvalidTokenError
