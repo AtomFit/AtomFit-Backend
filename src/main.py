@@ -7,7 +7,12 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,  # type: ignore
-    allow_origins=["http://localhost:3000/", "https://atom-fit-frontend.vercel.app/"],  # Allows all origins
+    allow_origins=[
+        "http://localhost:3000",
+        "https://localhost:3000",
+        "http://atom-fit-frontend.vercel.app",
+        "https://atom-fit-frontend.vercel.app",
+    ],  # Allows all origins
     allow_credentials=True,
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers
