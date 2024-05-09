@@ -42,7 +42,8 @@ class AuthService:
             user = await self.uow.users.get_one(filter_by={"email": data.email})    # type: ignore
         if user is None:
             raise UserNotFoundException
-
+        if not self.compare_passwords(data.password, user.hashed_password):
+            raise UserNotFoundException
         token_service = TokenEncoderService(user)
         access_token = token_service.create_access_token()
         refresh_token = token_service.create_refresh_token()
@@ -51,16 +52,16 @@ class AuthService:
             value=refresh_token,
             httponly=True,
             secure=True,
-            samesite="strict",
+            samesite="none",
         )
         response.set_cookie(
             key=self.ACCESS_TOKEN,
             value=access_token,
             httponly=True,
             secure=True,
-            samesite="strict",
+            samesite="none",
         )
-        return {"result": "success"}
+        return {"access": access_token, "refresh": refresh_token, "expires_in": 15}
 
     def logout(self, response: Response) -> None:
         response.delete_cookie(key=self.ACCESS_TOKEN)
@@ -101,3 +102,7 @@ class AuthService:
         pwd_bytes: bytes = password.encode()
         hashed_password = bcrypt.hashpw(pwd_bytes, salt)
         return hashed_password.decode("utf-8")
+
+    @staticmethod
+    def compare_passwords(password: str, hashed_password: str) -> bool:
+        return bcrypt.checkpw(password.encode(), hashed_password.encode())
