@@ -2,9 +2,11 @@ from abc import ABC, abstractmethod
 from typing import Type
 
 from database import async_session_maker
+from repositories.images import ImagesRepository
 from repositories.nutriton.meal_nutrients import MealNutrientsRepository
 from repositories.nutriton.user_goal_nutrients import UserGoalNutrientsRepository
 from repositories.users import UsersRepository
+from repositories.workout.exercises import ExercisesRepository
 
 
 class IUnitOfWork(ABC):
@@ -44,6 +46,8 @@ class UnitOfWork(IUnitOfWork):
         self.users = UsersRepository(self.session)
         self.meal_nutrients = MealNutrientsRepository(self.session)
         self.user_goal_nutrients = UserGoalNutrientsRepository(self.session)
+        self.exercises = ExercisesRepository(self.session)
+        self.images = ImagesRepository(self.session)
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         if exc_type:
