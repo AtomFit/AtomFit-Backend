@@ -55,11 +55,14 @@ class AuthJWT(BaseModel):
     # refresh_token_expire_minutes: int = 60 * 24 * 30
     # access_token_expire_minutes: int = 3
 
+class FilesSettings(BaseModel):
+    img_storage: Path = BASE_DIR / "static/images"
 
 class Settings(BaseSettings):
     db: DbSettings = DbSettings()
     stage: Final[str | None] = STAGE
     auth_jwt: AuthJWT = AuthJWT()
+    files: FilesSettings = FilesSettings()
 
     # db_echo: bool = True
 

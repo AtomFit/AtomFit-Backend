@@ -19,6 +19,7 @@ pyjwt = "^2.8.0"
 pydantic = {extras = ["email"], version = "^2.6.4"}
 mypy = "^1.9.0"
 gunicorn = "^21.2.0"
+fastapi-storages = "^0.3.0"
 
 [tool.mypy]
 python_version = "3.12"

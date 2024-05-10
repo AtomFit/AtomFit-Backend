@@ -9,6 +9,12 @@ from alembic import context
 
 from config import settings
 from database import Base
+from models.users import UserOrm
+from models.workout.exercise import ExerciseOrm
+from models.nutrition.meal_nutrients import MealNutrientsOrm
+from models.nutrition.user_goal_nutrients import UserGoalNutrientsOrm
+from models.images import ImageOrm
+
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
