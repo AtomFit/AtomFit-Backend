@@ -1,3 +1,5 @@
+from fastapi import UploadFile
+
 from schemas.workout.exercises import CreateExercise
 from utils.unit_of_work import UnitOfWork
 
@@ -23,9 +25,9 @@ class ExercisesService:
             exercise_dict = exercise.to_dict()
         return exercise_dict
 
-    async def create_exercise(self, exercise_data: CreateExercise) -> int:
+    async def create_exercise(self, exercise_data: CreateExercise, exercise_photo: UploadFile) -> int:
         async with self.uow:
-            image_id = await self.uow.images.add_one(data=exercise_data.image.file)
+            image_id = await self.uow.images.add_one(data=exercise_photo.file)
             exercise_dict = self.exercise_to_dict(exercise_data, image_id)
             exercise_id = await self.uow.exercises.add_one(data=exercise_dict)
             await self.uow.commit()
