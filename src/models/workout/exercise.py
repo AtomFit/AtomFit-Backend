@@ -1,8 +1,10 @@
+from enum import Enum
+
 from sqlalchemy import text, CheckConstraint, Column, Integer, ForeignKey, String
-from sqlalchemy.orm import Mapped, relationship, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column
 
 from database import Base
-from models.images import ImageOrm
+from schemas.workout.exercises import MuscleGroups
 
 
 class ExerciseOrm(Base):
@@ -10,10 +12,10 @@ class ExerciseOrm(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str]
     description: Mapped[str] = mapped_column(String(500))
-    video_url: Mapped[str]
-    image_id = Column(Integer, ForeignKey("image.id", ondelete="SET NULL"))
 
-    image: Mapped["ImageOrm"] = relationship()
+    video_url: Mapped[str]
+
+    muscle_groups = Column(Enum(MuscleGroups))
 
     __table_args__ = (
         CheckConstraint(
@@ -28,5 +30,4 @@ class ExerciseOrm(Base):
             "name": self.name,
             "description": self.description,
             "video_url": self.video_url,
-            "image": self.image.to_dict(),
         }

@@ -24,7 +24,7 @@ class AuthService:
         user_data_dict = self.get_user_data_dict(user_data)
 
         async with self.uow:
-            user = await self.uow.users.get_one(    # type: ignore
+            user = await self.uow.users.get_one(  # type: ignore
                 filter_by={"email": user_data_dict["email"]}
             )
             if user:
@@ -39,7 +39,7 @@ class AuthService:
 
     async def login(self, data: LoginUserSchema, response: Response) -> dict[str, str]:
         async with self.uow:
-            user = await self.uow.users.get_one(filter_by={"email": data.email})    # type: ignore
+            user = await self.uow.users.get_one(filter_by={"email": data.email})  # type: ignore
         if user is None:
             raise UserNotFoundException
         if not self.compare_passwords(data.password, user.hashed_password):
@@ -53,6 +53,7 @@ class AuthService:
             httponly=True,
             secure=True,
             samesite="none",
+            domain=".koyeb.app",
         )
         response.set_cookie(
             key=self.ACCESS_TOKEN,
@@ -60,6 +61,7 @@ class AuthService:
             httponly=True,
             secure=True,
             samesite="none",
+            domain=".koyeb.app",
         )
         return {"access": access_token, "refresh": refresh_token, "expires_in": 15}
 

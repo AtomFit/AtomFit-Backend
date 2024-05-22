@@ -25,10 +25,9 @@ class ExercisesService:
             exercise_dict = exercise.to_dict()
         return exercise_dict
 
-    async def create_exercise(self, exercise_data: CreateExercise, exercise_photo: UploadFile) -> int:
+    async def create_exercise(self, exercise_data: CreateExercise) -> int:
+        exercise_dict = self.exercise_to_dict(exercise_data)
         async with self.uow:
-            image_id = await self.uow.images.add_one(data=exercise_photo.file)
-            exercise_dict = self.exercise_to_dict(exercise_data, image_id)
             exercise_id = await self.uow.exercises.add_one(data=exercise_dict)
             await self.uow.commit()
         return exercise_id[0]
@@ -39,10 +38,10 @@ class ExercisesService:
             await self.uow.commit()
 
     @staticmethod
-    def exercise_to_dict(exercise, image_id: int):
+    def exercise_to_dict(exercise):
         return {
             "name": exercise.name,
             "description": exercise.description,
-            "image_id": image_id,
+            "muscle_groups": exercise.muscles,
             "video_url": exercise.video_url,
         }
