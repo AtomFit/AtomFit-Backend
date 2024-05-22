@@ -37,7 +37,7 @@ class AuthService:
             await self.uow.commit()
         return user
 
-    async def login(self, data: LoginUserSchema, response: Response) -> dict[str, str]:
+    async def login(self, data: LoginUserSchema, response: Response) -> dict:
         async with self.uow:
             user = await self.uow.users.get_one(filter_by={"email": data.email})  # type: ignore
         if user is None:
