@@ -4,7 +4,6 @@ import jwt
 from fastapi import HTTPException, status
 from jwt import InvalidTokenError
 
-
 from config import settings
 from exeptions.users import InactiveUserException
 from schemas.users import UserSchema
