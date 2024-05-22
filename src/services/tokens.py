@@ -2,7 +2,7 @@ from datetime import timedelta, datetime, timezone
 from typing import Final, Any
 import jwt
 from fastapi import HTTPException, status
-from jwt import InvalidTokenError
+from jwt.exceptions import InvalidTokenError
 
 from config import settings
 from exeptions.users import InactiveUserException
@@ -75,6 +75,8 @@ class TokenDecoderService:
         self.uow = uow
 
     def decode_jwt(self) -> dict[Any, Any]:
+        print(self.public_key)
+        print(self.token)
         decoded: dict[Any, Any] = jwt.decode(
             self.token,  # type: ignore
             self.public_key,
